@@ -50,7 +50,7 @@ char *read_file(const char *filename)
 
 	readlen = 0;
 	while (true) {
-		ssize_t len = read(fd, content + readlen, BUFSIZ);
+		ssize_t len = read(fd, content + readlen, filesize - readlen);
 
 		if (len == 0)
 			break;
@@ -63,6 +63,8 @@ char *read_file(const char *filename)
 
 	if (readlen != filesize)
 		goto CLOSE_FD;
+
+	content[filesize] = '\0';
 
 	close(fd);
 
