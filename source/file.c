@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <threads.h>
+#include <time.h>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -73,4 +75,29 @@ char *read_file(const char *filename)
 CLOSE_FD:	close(fd);
 FREE_CONTENT:	free(content);
 RETURN_NULL:	return NULL;
+}
+
+// 0: create, 1: modified, 2: access
+char *get_file_time(
+		const char *filename, enum file_time_type type, char *format
+) {
+	thread_local static char timestamp[BUFSIZ];
+	struct stat attr;
+	struct tm *tm;
+
+	if (stat(filename, &attr) == -1)
+		return NULL;
+
+	switch (type) {
+	case 0: tm = gmtime(&attr.st_ctim.tv_sec); break;
+	case 1: tm = gmtime(&attr.st_mtim.tv_sec); break;
+	case 2: tm = gmtime(&attr.st_atim.tv_sec); break;
+	default: return NULL;
+	}
+
+	if (strftime(timestamp, BUFSIZ - 1,
+	      	     format, gmtime(&attr.st_mtim.tv_sec)) == 0)
+		return NULL;
+	
+	return timestamp;
 }
